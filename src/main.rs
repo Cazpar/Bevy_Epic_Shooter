@@ -5,7 +5,7 @@ mod plugins;
 mod components;
 mod resources;
 mod systems;
-mod events;
+// mod events;
 
 fn main() {
     App::new()
