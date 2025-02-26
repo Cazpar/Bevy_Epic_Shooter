@@ -7,10 +7,13 @@ mod resources;
 mod systems;
 // mod events;
 
+use resources::game_state::GameState;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(plugins::GamePlugins)
+        .insert_resource(GameState::new())
         .add_systems(Startup, setup)
         .run();
 }

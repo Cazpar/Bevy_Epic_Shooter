@@ -12,10 +12,14 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn spawn_player(mut commands: Commands) {
     commands.spawn((
         SpriteBundle {
-            texture: asset_server.load("sprites/player.png"),
+            sprite: Sprite {
+                color: Color::rgb(0.25, 0.25, 0.75),
+                custom_size: Some(Vec2::new(30.0, 30.0)),
+                ..default()
+            },
             transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
             ..default()
         },
