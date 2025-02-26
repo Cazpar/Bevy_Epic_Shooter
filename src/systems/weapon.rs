@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::input::mouse::MouseButton;
 use crate::components::player::Player;
 use crate::components::weapon::{Weapon, Projectile, WeaponType};
 use crate::resources::game_state::GameState;
@@ -8,6 +9,7 @@ pub fn player_shooting(
     mut commands: Commands,
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
+    mouse_input: Res<Input<MouseButton>>,
     game_state: Res<GameState>,
     mut query: Query<(&Transform, &mut Weapon, &Player)>,
 ) {
@@ -19,8 +21,8 @@ pub fn player_shooting(
     let current_time = time.elapsed_seconds();
     
     for (transform, mut weapon, _player) in query.iter_mut() {
-        // Check if player is shooting
-        if keyboard_input.pressed(KeyCode::Space) && weapon.can_shoot(current_time) {
+        // Check if player is shooting (either spacebar or left mouse button)
+        if (keyboard_input.pressed(KeyCode::Space) || mouse_input.pressed(MouseButton::Left)) && weapon.can_shoot(current_time) {
             // Update last shot time
             weapon.last_shot = current_time;
             
