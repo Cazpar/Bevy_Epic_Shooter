@@ -33,10 +33,15 @@ pub fn player_shooting(
             // Calculate projectile direction based on player rotation
             let forward = rotation * Vec3::X;
             
-            // Spawn projectile
+            // Calculate gun position based on the player sprite
+            // Based on the screenshot, the gun appears to be on the right side of the player
+            // These values are adjusted to match the position of the gun in the sprite
+            let gun_offset = rotation * Vec3::new(15.0, 0.0, 0.0); // Offset from player center to gun position
+            
+            // Spawn projectile from the gun position
             spawn_projectile(
                 &mut commands,
-                position + forward * 20.0, // Offset from player
+                position + gun_offset, // Position at the gun
                 forward.truncate(),
                 weapon.as_ref(),
             );

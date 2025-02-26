@@ -21,7 +21,7 @@ fn spawn_player(
     let texture_handle = asset_server.load("sprites/common.png");
     
     // Spawn the player entity
-    let player_entity = commands.spawn((
+    commands.spawn((
         SpriteBundle {
             texture: texture_handle,
             sprite: Sprite {
@@ -39,16 +39,5 @@ fn spawn_player(
         },
         // Add a pistol as the default weapon
         Weapon::new(WeaponType::Pistol),
-    )).id();
-    
-    // Add a direction indicator as a child entity
-    commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            color: Color::RED,
-            custom_size: Some(Vec2::new(15.0, 5.0)),
-            ..default()
-        },
-        transform: Transform::from_translation(Vec3::new(20.0, 0.0, 0.1)),
-        ..default()
-    }).set_parent(player_entity);
+    ));
 }
