@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use crate::components::player::Player;
 use crate::components::weapon::{Weapon, WeaponType};
+use crate::components::pickup::WeaponUpgrades;
 use crate::systems::player::*;
 
 pub struct PlayerPlugin;
@@ -36,8 +37,11 @@ fn spawn_player(
             health: 100.0,
             speed: 150.0,
             rotation: 0.0,
+            current_weapon: WeaponType::Pistol,
         },
         // Add a pistol as the default weapon
         Weapon::new(WeaponType::Pistol),
+        // Add weapon upgrades component
+        WeaponUpgrades::new(),
     ));
 }
