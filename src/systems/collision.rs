@@ -5,11 +5,11 @@ use crate::components::obstacle::Obstacle;
 use crate::components::debug::CollisionDebug;
 
 // Constants for collision handling
-const COLLISION_BUFFER: f32 = 5.0; // Buffer distance to prevent entities from getting too close to obstacles
+const COLLISION_BUFFER: f32 = 10.0; // Increased buffer distance to prevent entities from getting too close to obstacles
 
 pub fn handle_player_obstacle_collision(
     mut commands: Commands,
-    mut player_query: Query<(Entity, &mut Transform, &Player), Without<CollisionDebug>>,
+    mut player_query: Query<(Entity, &mut Transform, &Player)>,
     obstacle_query: Query<(Entity, &Transform, &Obstacle), Without<Player>>,
     time: Res<Time>,
 ) {
@@ -30,8 +30,8 @@ pub fn handle_player_obstacle_collision(
                 // Calculate direction from obstacle to player
                 let direction = (player_pos - obstacle_pos).normalize_or_zero();
                 
-                // Push player away from obstacle
-                let push_strength = (min_distance - distance) * 5.0 * time.delta_seconds();
+                // Push player away from obstacle with stronger force
+                let push_strength = (min_distance - distance) * 15.0 * time.delta_seconds();
                 player_transform.translation.x += direction.x * push_strength;
                 player_transform.translation.y += direction.y * push_strength;
                 
@@ -50,7 +50,7 @@ pub fn handle_player_obstacle_collision(
 
 pub fn handle_enemy_obstacle_collision(
     mut commands: Commands,
-    mut enemy_query: Query<(Entity, &mut Transform, &Enemy), Without<CollisionDebug>>,
+    mut enemy_query: Query<(Entity, &mut Transform, &Enemy)>,
     obstacle_query: Query<(Entity, &Transform, &Obstacle), Without<Enemy>>,
     time: Res<Time>,
 ) {
@@ -71,8 +71,8 @@ pub fn handle_enemy_obstacle_collision(
                 // Calculate direction from obstacle to enemy
                 let direction = (enemy_pos - obstacle_pos).normalize_or_zero();
                 
-                // Push enemy away from obstacle
-                let push_strength = (min_distance - distance) * 5.0 * time.delta_seconds();
+                // Push enemy away from obstacle with stronger force
+                let push_strength = (min_distance - distance) * 15.0 * time.delta_seconds();
                 enemy_transform.translation.x += direction.x * push_strength;
                 enemy_transform.translation.y += direction.y * push_strength;
                 
