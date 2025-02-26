@@ -130,20 +130,39 @@ pub fn handle_projectile_obstacle_collision(
 // System to update collision debug visuals
 pub fn update_collision_debug(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut Sprite, &mut CollisionDebug)>,
+    mut query: Query<(Entity, &mut Sprite, &mut CollisionDebug, Option<&Children>)>,
+    mut child_sprites: Query<&mut Sprite, Without<CollisionDebug>>,
     time: Res<Time>,
 ) {
-    for (entity, mut sprite, mut debug) in query.iter_mut() {
+    for (entity, mut sprite, mut debug, children) in query.iter_mut() {
         // Update the timer
         debug.timer.tick(time.delta());
         
         // Make the sprite flash red
         sprite.color = Color::RED;
         
+        // Also make any child sprites flash red
+        if let Some(children) = children {
+            for child in children.iter() {
+                if let Ok(mut child_sprite) = child_sprites.get_mut(*child) {
+                    child_sprite.color = Color::RED;
+                }
+            }
+        }
+        
         // If the timer is finished, remove the debug component
         if debug.timer.finished() {
             commands.entity(entity).remove::<CollisionDebug>();
             sprite.color = Color::WHITE; // Reset color
+            
+            // Also reset any child sprites
+            if let Some(children) = children {
+                for child in children.iter() {
+                    if let Ok(mut child_sprite) = child_sprites.get_mut(*child) {
+                        child_sprite.color = Color::WHITE;
+                    }
+                }
+            }
         }
     }
 } 

@@ -49,7 +49,7 @@ pub fn spawn_enemy(
         EnemyType::Shooter => (Color::rgb(0.9, 0.6, 0.1), Vec2::new(25.0, 25.0)), // Orange
     };
     
-    // Spawn the enemy entity
+    // Spawn the enemy entity with explicit z-index
     let enemy_entity = commands.spawn((
         SpriteBundle {
             sprite: Sprite {
@@ -57,23 +57,27 @@ pub fn spawn_enemy(
                 custom_size: Some(size),
                 ..default()
             },
-            transform: Transform::from_translation(Vec3::new(spawn_x, spawn_y, 0.0)),
+            transform: Transform::from_translation(Vec3::new(spawn_x, spawn_y, 1.0)), // Set z to 1.0 for body
+            visibility: Visibility::Visible, // Explicitly set visibility
             ..default()
         },
         Enemy::new(enemy_type),
     )).id();
     
-    // Add a direction indicator as a child entity
+    // Add a direction indicator as a child entity with higher z-index
     let indicator_size = size.x * 0.5;
-    commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            color: Color::rgb(0.9, 0.9, 0.9), // Light gray
-            custom_size: Some(Vec2::new(indicator_size, indicator_size * 0.3)),
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb(0.9, 0.9, 0.9), // Light gray
+                custom_size: Some(Vec2::new(indicator_size, indicator_size * 0.3)),
+                ..default()
+            },
+            transform: Transform::from_translation(Vec3::new(size.x * 0.6, 0.0, 1.1)), // Set z to 1.1 for gun
+            visibility: Visibility::Visible, // Explicitly set visibility
             ..default()
         },
-        transform: Transform::from_translation(Vec3::new(size.x * 0.6, 0.0, 0.1)),
-        ..default()
-    }).set_parent(enemy_entity);
+    )).set_parent(enemy_entity);
 }
 
 // Move enemies toward the player

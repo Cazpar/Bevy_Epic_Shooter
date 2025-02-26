@@ -18,7 +18,7 @@ impl Plugin for MapPlugin {
 // Map generation constants
 const CHUNK_SIZE: usize = 10; // Size of each chunk in tiles
 const TILE_SIZE: f32 = 32.0;  // Size of each tile in pixels
-const LOAD_DISTANCE: f32 = 2.0; // Distance in chunks to load from player
+const LOAD_DISTANCE: f32 = 4.0; // Distance in chunks to load from player
 const OBSTACLE_DENSITY: f32 = 0.1; // Probability of an obstacle per tile (0.0-1.0)
 
 // Resource to track map state
