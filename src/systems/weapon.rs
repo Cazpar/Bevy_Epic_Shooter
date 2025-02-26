@@ -156,10 +156,10 @@ pub fn handle_projectile_enemy_collision(
                 // Despawn projectile
                 commands.entity(projectile_entity).despawn();
                 
-                // If enemy health <= 0, despawn enemy
+                // If enemy health <= 0, despawn enemy and all its children
                 if enemy.health <= 0.0 {
                     info!("Enemy defeated!");
-                    commands.entity(enemy_entity).despawn();
+                    commands.entity(enemy_entity).despawn_recursive();
                 }
                 
                 break; // No need to check other enemies for this projectile
@@ -207,16 +207,16 @@ pub fn handle_projectile_obstacle_damage(
                     info!("Obstacle hit! Type: {:?}, Health: {}/{}, Damage: {}", 
                           obstacle.obstacle_type, obstacle.health, obstacle.max_health, projectile.damage);
                     
-                    // If obstacle is destroyed, despawn it
+                    // If obstacle is destroyed, despawn it and all its children
                     if is_destroyed {
                         info!("Obstacle destroyed!");
-                        commands.entity(obstacle_entity).despawn();
+                        commands.entity(obstacle_entity).despawn_recursive();
                     }
                 }
                 
                 // Despawn projectile if it should be despawned
                 if should_despawn_projectile {
-                    commands.entity(projectile_entity).despawn();
+                    commands.entity(projectile_entity).despawn_recursive();
                     break; // No need to check other obstacles for this projectile
                 }
             }
