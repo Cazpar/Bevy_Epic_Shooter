@@ -7,7 +7,7 @@ use crate::components::weapon::{Weapon, WeaponType};
 use crate::resources::game_state::GameState;
 
 // Chance for an enemy to drop a pickup when defeated
-const DROP_CHANCE: f32 = 0.4; // 40% chance
+const DROP_CHANCE: f32 = 0.9; // 90% chance for testing (was 40%)
 
 // Spawn a pickup when an enemy is defeated
 pub fn spawn_enemy_drops(
@@ -123,6 +123,7 @@ pub fn handle_pickup_collection(
         } else {
             // Add WeaponUpgrades component if it doesn't exist
             commands.entity(player_entity).insert(WeaponUpgrades::new());
+            info!("Added WeaponUpgrades component to player");
             continue; // Skip this frame, we'll have the component next frame
         };
         
@@ -134,12 +135,20 @@ pub fn handle_pickup_collection(
             let distance = player_pos.distance(pickup_pos);
             let min_distance = player_radius + pickup_radius;
             
+            // Debug distance to pickups
+            info!("Player distance to pickup: {}, min_distance: {}, pickup_type: {:?}", 
+                  distance, min_distance, pickup.pickup_type);
+            
             // If player collects the pickup
             if distance < min_distance {
+                // Add visual feedback - flash the player
+                commands.entity(player_entity).insert(crate::components::debug::CollisionDebug::default());
+                
                 // Apply the pickup effect
                 match pickup.pickup_type {
                     PickupType::Weapon(weapon_type) => {
                         // Change player's weapon
+                        info!("WEAPON CHANGE: from {:?} to {:?}", player.current_weapon, weapon_type);
                         player.current_weapon = weapon_type;
                         *weapon = Weapon::new(weapon_type);
                         info!("Player picked up weapon: {:?}", weapon_type);

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use crate::components::player::Player;
 use crate::resources::game_state::GameState;
+use crate::components::weapon::WeaponType;
 
 pub fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
@@ -71,6 +72,33 @@ pub fn player_movement(
                     transform.translation.y += right_direction.y * player.speed * time.delta_seconds();
                 }
             }
+        }
+    }
+}
+
+// System to update player appearance based on current weapon
+pub fn update_player_appearance(
+    mut query: Query<(&Player, &mut Sprite), Changed<Player>>,
+) {
+    for (player, mut sprite) in query.iter_mut() {
+        // Change player color based on weapon type for visual feedback
+        match player.current_weapon {
+            WeaponType::Pistol => {
+                sprite.color = Color::YELLOW;
+                info!("Player appearance updated to Pistol (Yellow)");
+            },
+            WeaponType::Shotgun => {
+                sprite.color = Color::ORANGE;
+                info!("Player appearance updated to Shotgun (Orange)");
+            },
+            WeaponType::MachineGun => {
+                sprite.color = Color::CYAN;
+                info!("Player appearance updated to Machine Gun (Cyan)");
+            },
+            WeaponType::RocketLauncher => {
+                sprite.color = Color::RED;
+                info!("Player appearance updated to Rocket Launcher (Red)");
+            },
         }
     }
 }
