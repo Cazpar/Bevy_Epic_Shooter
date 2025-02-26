@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::components::player::Player;
+use crate::components::weapon::{Weapon, WeaponType};
 use crate::systems::player::*;
 
 pub struct PlayerPlugin;
@@ -29,6 +30,8 @@ fn spawn_player(mut commands: Commands) {
             speed: 150.0,
             rotation: 0.0,
         },
+        // Add a pistol as the default weapon
+        Weapon::new(WeaponType::Pistol),
     )).id();
     
     // Add a direction indicator as a child entity
