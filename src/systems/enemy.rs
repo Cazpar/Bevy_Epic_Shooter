@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use crate::components::enemy::{Enemy, EnemyType};
+use crate::components::player::Player;
 use crate::resources::game_state::GameState;
 use rand::{thread_rng, Rng};
 
@@ -64,8 +65,8 @@ pub fn spawn_enemy(
 pub fn enemy_movement(
     time: Res<Time>,
     game_state: Res<GameState>,
-    player_query: Query<&Transform, With<crate::components::player::Player>>,
-    mut enemy_query: Query<(&mut Transform, &mut Enemy)>,
+    player_query: Query<&Transform, With<Player>>,
+    mut enemy_query: Query<(&mut Transform, &mut Enemy), Without<Player>>,
 ) {
     // Skip movement if game is paused or over
     if game_state.paused || game_state.game_over {
