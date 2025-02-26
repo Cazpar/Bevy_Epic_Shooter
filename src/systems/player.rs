@@ -8,6 +8,11 @@ pub fn player_movement(
     game_state: Res<GameState>,
     mut query: Query<(&mut Transform, &mut Player)>,
 ) {
+    // Skip movement if game is paused or over
+    if game_state.paused || game_state.game_over {
+        return;
+    }
+    
     for (mut transform, mut player) in query.iter_mut() {
         let mut direction = Vec2::ZERO;
         
