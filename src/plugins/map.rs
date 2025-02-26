@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use rand::{thread_rng, Rng};
 use std::collections::HashMap;
 use crate::components::player::Player;
+use crate::components::obstacle::{Obstacle, ObstacleType};
 
 pub struct MapPlugin;
 
@@ -18,6 +19,7 @@ impl Plugin for MapPlugin {
 const CHUNK_SIZE: usize = 10; // Size of each chunk in tiles
 const TILE_SIZE: f32 = 32.0;  // Size of each tile in pixels
 const LOAD_DISTANCE: f32 = 2.0; // Distance in chunks to load from player
+const OBSTACLE_DENSITY: f32 = 0.1; // Probability of an obstacle per tile (0.0-1.0)
 
 // Resource to track map state
 #[derive(Resource, Default)]
@@ -41,10 +43,23 @@ fn setup_map(
     // Load the tileset
     let tileset_handle = asset_server.load("map/tx_tileset_grass.png");
     
+    // Load obstacle textures
+    let rock_texture = asset_server.load("map/obstacles/rock.png");
+    let crate_texture = asset_server.load("map/obstacles/crate.png");
+    let bush_texture = asset_server.load("map/obstacles/bush.png");
+    
     // Generate the initial chunks around (0,0)
     for y in -1..=1 {
         for x in -1..=1 {
-            generate_chunk(&mut commands, &mut map_state, tileset_handle.clone(), x, y);
+            generate_chunk(
+                &mut commands, 
+                &mut map_state, 
+                tileset_handle.clone(), 
+                rock_texture.clone(),
+                crate_texture.clone(),
+                bush_texture.clone(),
+                x, y
+            );
         }
     }
 }
@@ -70,7 +85,19 @@ fn check_for_new_chunks(
                 // If this chunk isn't loaded yet, generate it
                 if !map_state.loaded_chunks.contains_key(&(x, y)) {
                     let tileset_handle = asset_server.load("map/tx_tileset_grass.png");
-                    generate_chunk(&mut commands, &mut map_state, tileset_handle, x, y);
+                    let rock_texture = asset_server.load("map/obstacles/rock.png");
+                    let crate_texture = asset_server.load("map/obstacles/crate.png");
+                    let bush_texture = asset_server.load("map/obstacles/bush.png");
+                    
+                    generate_chunk(
+                        &mut commands, 
+                        &mut map_state, 
+                        tileset_handle, 
+                        rock_texture,
+                        crate_texture,
+                        bush_texture,
+                        x, y
+                    );
                 }
             }
         }
@@ -100,6 +127,9 @@ fn generate_chunk(
     commands: &mut Commands,
     map_state: &mut MapState,
     tileset_handle: Handle<Image>,
+    rock_texture: Handle<Image>,
+    crate_texture: Handle<Image>,
+    bush_texture: Handle<Image>,
     chunk_x: i32,
     chunk_y: i32,
 ) {
@@ -121,12 +151,16 @@ fn generate_chunk(
     let chunk_world_x = chunk_x as f32 * CHUNK_SIZE as f32 * TILE_SIZE;
     let chunk_world_y = chunk_y as f32 * CHUNK_SIZE as f32 * TILE_SIZE;
     
+    // Track positions where obstacles are placed to avoid overlaps
+    let mut obstacle_positions = Vec::new();
+    
     // Generate tiles for this chunk
     for local_y in 0..CHUNK_SIZE {
         for local_x in 0..CHUNK_SIZE {
             // Calculate the world position of this tile
             let tile_world_x = chunk_world_x + local_x as f32 * TILE_SIZE;
             let tile_world_y = chunk_world_y + local_y as f32 * TILE_SIZE;
+            let tile_position = Vec2::new(tile_world_x, tile_world_y);
             
             // Determine tile type based on position and randomness
             let (tile_x, tile_y) = determine_tile_coords(chunk_x, chunk_y, local_x, local_y, &mut rng);
@@ -148,6 +182,55 @@ fn generate_chunk(
             
             // Add the tile as a child of the chunk
             commands.entity(chunk_entity).add_child(tile_entity);
+            
+            // Randomly decide if we should place an obstacle on this tile
+            // Don't place obstacles on edges or if the tile is not grass
+            let is_edge = local_x == 0 || local_y == 0 || local_x == CHUNK_SIZE - 1 || local_y == CHUNK_SIZE - 1;
+            let is_grass = tile_y < 1.0; // Assuming grass tiles are in the first row
+            
+            if !is_edge && is_grass && rng.gen::<f32>() < OBSTACLE_DENSITY {
+                // Choose a random obstacle type
+                let obstacle_type = match rng.gen_range(0..3) {
+                    0 => ObstacleType::Rock,
+                    1 => ObstacleType::Crate,
+                    _ => ObstacleType::Bush,
+                };
+                
+                // Get the appropriate texture
+                let obstacle_texture = match obstacle_type {
+                    ObstacleType::Rock => rock_texture.clone(),
+                    ObstacleType::Crate => crate_texture.clone(),
+                    ObstacleType::Bush => bush_texture.clone(),
+                };
+                
+                // Add some randomness to the obstacle position within the tile
+                let offset_x = rng.gen_range(-5.0..5.0);
+                let offset_y = rng.gen_range(-5.0..5.0);
+                
+                // Spawn the obstacle
+                let obstacle_entity = commands.spawn((
+                    SpriteBundle {
+                        texture: obstacle_texture,
+                        sprite: Sprite {
+                            custom_size: Some(Vec2::new(32.0, 32.0)),
+                            ..default()
+                        },
+                        transform: Transform::from_translation(Vec3::new(
+                            tile_world_x + offset_x, 
+                            tile_world_y + offset_y, 
+                            1.0 // Slightly above the tiles
+                        )),
+                        ..default()
+                    },
+                    Obstacle::new(obstacle_type),
+                )).id();
+                
+                // Add the obstacle as a child of the chunk
+                commands.entity(chunk_entity).add_child(obstacle_entity);
+                
+                // Record the obstacle position
+                obstacle_positions.push(tile_position);
+            }
         }
     }
     
