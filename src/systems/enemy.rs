@@ -8,7 +8,6 @@ use rand::{thread_rng, Rng};
 // Spawn a new enemy at a random position around the screen edges
 pub fn spawn_enemy(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     game_state: Res<GameState>,
 ) {
@@ -42,23 +41,39 @@ pub fn spawn_enemy(
         _ => EnemyType::Shooter,
     };
     
-    // Select enemy sprite based on type
-    let sprite_path = match enemy_type {
-        EnemyType::Basic => "sprites/kenney_blocky-characters/Skins/Basic/skin_soldier.png",
-        EnemyType::Fast => "sprites/kenney_blocky-characters/Skins/Basic/skin_robot.png",
-        EnemyType::Tank => "sprites/kenney_blocky-characters/Skins/Basic/skin_orc.png",
-        EnemyType::Shooter => "sprites/kenney_blocky-characters/Skins/Basic/skin_man.png",
+    // Select enemy color and size based on type
+    let (color, size) = match enemy_type {
+        EnemyType::Basic => (Color::rgb(0.9, 0.3, 0.3), Vec2::new(25.0, 25.0)), // Red
+        EnemyType::Fast => (Color::rgb(0.3, 0.9, 0.3), Vec2::new(20.0, 20.0)),  // Green
+        EnemyType::Tank => (Color::rgb(0.5, 0.5, 0.5), Vec2::new(40.0, 40.0)),  // Gray
+        EnemyType::Shooter => (Color::rgb(0.9, 0.6, 0.1), Vec2::new(25.0, 25.0)), // Orange
     };
     
-    commands.spawn((
+    // Spawn the enemy entity
+    let enemy_entity = commands.spawn((
         SpriteBundle {
-            texture: asset_server.load(sprite_path),
-            transform: Transform::from_translation(Vec3::new(spawn_x, spawn_y, 0.0))
-                .with_scale(Vec3::new(0.4, 0.4, 1.0)),
+            sprite: Sprite {
+                color,
+                custom_size: Some(size),
+                ..default()
+            },
+            transform: Transform::from_translation(Vec3::new(spawn_x, spawn_y, 0.0)),
             ..default()
         },
         Enemy::new(enemy_type),
-    ));
+    )).id();
+    
+    // Add a direction indicator as a child entity
+    let indicator_size = size.x * 0.5;
+    commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            color: Color::rgb(0.9, 0.9, 0.9), // Light gray
+            custom_size: Some(Vec2::new(indicator_size, indicator_size * 0.3)),
+            ..default()
+        },
+        transform: Transform::from_translation(Vec3::new(size.x * 0.6, 0.0, 0.1)),
+        ..default()
+    }).set_parent(enemy_entity);
 }
 
 // Move enemies toward the player

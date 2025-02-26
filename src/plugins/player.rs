@@ -12,14 +12,16 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let texture = asset_server.load("sprites/kenney_blocky-characters/Skins/Basic/skin_adventurer.png");
-    
-    commands.spawn((
+fn spawn_player(mut commands: Commands) {
+    // Spawn the player entity
+    let player_entity = commands.spawn((
         SpriteBundle {
-            texture,
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0))
-                .with_scale(Vec3::new(0.5, 0.5, 1.0)),
+            sprite: Sprite {
+                color: Color::rgb(0.2, 0.7, 0.9), // Blue color for player
+                custom_size: Some(Vec2::new(30.0, 30.0)),
+                ..default()
+            },
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
             ..default()
         },
         Player {
@@ -27,5 +29,16 @@ fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
             speed: 150.0,
             rotation: 0.0,
         },
-    ));
+    )).id();
+    
+    // Add a direction indicator as a child entity
+    commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            color: Color::WHITE,
+            custom_size: Some(Vec2::new(15.0, 5.0)),
+            ..default()
+        },
+        transform: Transform::from_translation(Vec3::new(20.0, 0.0, 0.1)),
+        ..default()
+    }).set_parent(player_entity);
 }
