@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use crate::systems::collision::{
     handle_player_obstacle_collision,
     handle_enemy_obstacle_collision,
-    handle_projectile_obstacle_collision,
     update_collision_debug,
 };
 
@@ -14,7 +13,6 @@ impl Plugin for CollisionPlugin {
             .add_systems(Update, (
                 handle_player_obstacle_collision,
                 handle_enemy_obstacle_collision,
-                handle_projectile_obstacle_collision,
                 update_collision_debug,
             ));
     }

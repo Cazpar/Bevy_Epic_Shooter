@@ -39,11 +39,12 @@ The project follows Bevy's recommended architecture:
 
 - [x] Basic project setup with Bevy 0.15
 - [x] Player movement system
-- [ ] Enemy systems
-- [ ] Weapon systems
-- [ ] Bullet physics
-- [ ] Collision detection
-- [ ] Map generation
+- [x] Enemy systems (basic implementation)
+- [x] Weapon systems (basic implementation)
+- [x] Collision detection (player-obstacle, enemy-obstacle, projectile-obstacle)
+- [ ] Bullet damage system
+- [ ] Health and damage systems
+- [%] Map generation
 - [ ] UI systems
 - [ ] Game state management
 - [ ] Sound effects and music
