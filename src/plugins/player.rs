@@ -13,16 +13,23 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-fn spawn_player(mut commands: Commands) {
+fn spawn_player(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    // Load the player sprite
+    let texture_handle = asset_server.load("sprites/common.png");
+    
     // Spawn the player entity
     let player_entity = commands.spawn((
         SpriteBundle {
+            texture: texture_handle,
             sprite: Sprite {
-                color: Color::rgb(0.2, 0.7, 0.9), // Blue color for player
-                custom_size: Some(Vec2::new(30.0, 30.0)),
+                // Use the entire image as the sprite
+                custom_size: Some(Vec2::new(40.0, 40.0)),
                 ..default()
             },
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 0.0)),
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
             ..default()
         },
         Player {
@@ -37,7 +44,7 @@ fn spawn_player(mut commands: Commands) {
     // Add a direction indicator as a child entity
     commands.spawn(SpriteBundle {
         sprite: Sprite {
-            color: Color::WHITE,
+            color: Color::RED,
             custom_size: Some(Vec2::new(15.0, 5.0)),
             ..default()
         },
