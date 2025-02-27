@@ -2,70 +2,76 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use crate::components::player::Player;
 use crate::components::weapon::WeaponType;
+use crate::components::animation::AnimationState;
 
 pub fn player_movement(
-    keyboard_input: Res<Input<KeyCode>>,
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut Player)>,
-    q_window: Query<&Window, With<PrimaryWindow>>,
-    q_camera: Query<(&Camera, &GlobalTransform)>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    camera_query: Query<(&Camera, &GlobalTransform)>,
+    mut query: Query<(&mut Transform, &mut Player, &mut Sprite)>,
+    keyboard_input: Res<Input<KeyCode>>,
 ) {
-    // Get the window and camera
-    let Ok(window) = q_window.get_single() else {
-        return; // No window found
-    };
-    
-    let Ok((camera, camera_transform)) = q_camera.get_single() else {
-        return; // No camera found
-    };
-    
-    // Get the cursor position in the window
-    if let Some(cursor_position) = window.cursor_position() {
-        // Convert cursor position to world coordinates
-        if let Some(cursor_world_position) = camera.viewport_to_world_2d(camera_transform, cursor_position) {
-            for (mut transform, mut player) in query.iter_mut() {
-                // Calculate direction to mouse
-                let player_position = transform.translation.truncate();
-                let direction_to_mouse = (cursor_world_position - player_position).normalize_or_zero();
+    if let Ok((mut transform, mut player, mut sprite)) = query.get_single_mut() {
+        // Get the primary window
+        let window = window_query.get_single().unwrap();
+
+        // Get the camera
+        let (camera, camera_transform) = camera_query.get_single().unwrap();
+
+        // Calculate movement based on keyboard input
+        let mut movement = Vec2::ZERO;
+
+        // Forward/backward movement
+        if keyboard_input.pressed(KeyCode::W) {
+            movement.y += 1.0;
+        }
+        if keyboard_input.pressed(KeyCode::S) {
+            movement.y -= 1.0;
+        }
+
+        // Strafe movement
+        if keyboard_input.pressed(KeyCode::A) {
+            movement.x -= 1.0;
+            // Flip sprite when moving left
+            sprite.flip_x = true;
+        }
+        if keyboard_input.pressed(KeyCode::D) {
+            movement.x += 1.0;
+            // Don't flip sprite when moving right
+            sprite.flip_x = false;
+        }
+
+        // If not moving horizontally, use mouse position for sprite flipping
+        if movement.x == 0.0 {
+            // Get the cursor position in the window
+            if let Some(cursor_position) = window.cursor_position() {
+                // Convert cursor position to world coordinates
+                let cursor_world_position = camera
+                    .viewport_to_world(camera_transform, cursor_position)
+                    .map(|ray| ray.origin.truncate())
+                    .unwrap_or_default();
+
+                // Calculate direction to mouse (for determining sprite flip)
+                let direction_to_mouse = cursor_world_position - transform.translation.truncate();
                 
-                // Update player rotation to face the mouse
-                if direction_to_mouse != Vec2::ZERO {
-                    player.rotation = direction_to_mouse.y.atan2(direction_to_mouse.x);
-                    transform.rotation = Quat::from_rotation_z(player.rotation);
-                }
-                
-                // Handle forward movement with W key
-                if keyboard_input.pressed(KeyCode::W) {
-                    // Move in the direction the player is facing
-                    let forward_direction = transform.rotation.mul_vec3(Vec3::X).truncate();
-                    transform.translation.x += forward_direction.x * player.speed * time.delta_seconds();
-                    transform.translation.y += forward_direction.y * player.speed * time.delta_seconds();
-                }
-                
-                // Optional: Handle backward movement with S key
-                if keyboard_input.pressed(KeyCode::S) {
-                    // Move backward from the direction the player is facing
-                    let forward_direction = transform.rotation.mul_vec3(Vec3::X).truncate();
-                    transform.translation.x -= forward_direction.x * player.speed * time.delta_seconds();
-                    transform.translation.y -= forward_direction.y * player.speed * time.delta_seconds();
-                }
-                
-                // Optional: Handle strafing with A and D keys
-                if keyboard_input.pressed(KeyCode::A) {
-                    // Strafe left (perpendicular to forward direction)
-                    let right_direction = transform.rotation.mul_vec3(Vec3::Y).truncate();
-                    transform.translation.x -= right_direction.x * player.speed * time.delta_seconds();
-                    transform.translation.y -= right_direction.y * player.speed * time.delta_seconds();
-                }
-                
-                if keyboard_input.pressed(KeyCode::D) {
-                    // Strafe right (perpendicular to forward direction)
-                    let right_direction = transform.rotation.mul_vec3(Vec3::Y).truncate();
-                    transform.translation.x += right_direction.x * player.speed * time.delta_seconds();
-                    transform.translation.y += right_direction.y * player.speed * time.delta_seconds();
+                // Flip sprite based on mouse position (for aiming)
+                if direction_to_mouse.x < 0.0 {
+                    sprite.flip_x = true;
+                } else {
+                    sprite.flip_x = false;
                 }
             }
         }
+
+        // Normalize movement vector to prevent diagonal movement from being faster
+        if movement != Vec2::ZERO {
+            movement = movement.normalize();
+        }
+
+        // Apply movement
+        let move_speed = player.speed * time.delta_seconds();
+        transform.translation.x += movement.x * move_speed;
+        transform.translation.y += movement.y * move_speed;
     }
 }
 

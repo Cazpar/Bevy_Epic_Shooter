@@ -13,6 +13,9 @@ pub fn handle_player_obstacle_collision(
     obstacle_query: Query<(Entity, &Transform, &Obstacle), Without<Player>>,
     time: Res<Time>,
 ) {
+    // Create a list of collision debug entities to add after all collision checks
+    let mut collision_debug_entities = Vec::new();
+    
     for (player_entity, mut player_transform, _player) in player_query.iter_mut() {
         let player_pos = player_transform.translation.truncate();
         let player_radius = 16.0; // Assuming player sprite is roughly 32x32
@@ -35,16 +38,18 @@ pub fn handle_player_obstacle_collision(
                 player_transform.translation.x += direction.x * push_strength;
                 player_transform.translation.y += direction.y * push_strength;
                 
-                // Only add debug components if the entities still exist in the world
-                // This prevents panics when entities are destroyed during the same frame
-                if let Some(mut entity_commands) = commands.get_entity(player_entity) {
-                    entity_commands.insert(CollisionDebug::default());
-                }
-                
-                if let Some(mut entity_commands) = commands.get_entity(obstacle_entity) {
-                    entity_commands.insert(CollisionDebug::default());
-                }
+                // Store entities for collision debug instead of immediately inserting components
+                collision_debug_entities.push(player_entity);
+                collision_debug_entities.push(obstacle_entity);
             }
+        }
+    }
+    
+    // Add collision debug components after all collision checks
+    for entity in collision_debug_entities {
+        // Only add if the entity still exists
+        if let Some(mut entity_commands) = commands.get_entity(entity) {
+            entity_commands.insert(CollisionDebug::default());
         }
     }
 }
@@ -55,6 +60,9 @@ pub fn handle_enemy_obstacle_collision(
     obstacle_query: Query<(Entity, &Transform, &Obstacle), Without<Enemy>>,
     time: Res<Time>,
 ) {
+    // Create a list of collision debug entities to add after all collision checks
+    let mut collision_debug_entities = Vec::new();
+    
     for (enemy_entity, mut enemy_transform, _enemy) in enemy_query.iter_mut() {
         let enemy_pos = enemy_transform.translation.truncate();
         let enemy_radius = 16.0; // Assuming enemy sprite is roughly 32x32
@@ -77,16 +85,23 @@ pub fn handle_enemy_obstacle_collision(
                 enemy_transform.translation.x += direction.x * push_strength;
                 enemy_transform.translation.y += direction.y * push_strength;
                 
-                // Only add debug components if the entities still exist in the world
-                // This prevents panics when entities are destroyed during the same frame
-                if let Some(mut entity_commands) = commands.get_entity(enemy_entity) {
-                    entity_commands.insert(CollisionDebug::default());
+                // Only add entities that still exist to our list
+                if commands.get_entity(enemy_entity).is_some() {
+                    collision_debug_entities.push(enemy_entity);
                 }
                 
-                if let Some(mut entity_commands) = commands.get_entity(obstacle_entity) {
-                    entity_commands.insert(CollisionDebug::default());
+                if commands.get_entity(obstacle_entity).is_some() {
+                    collision_debug_entities.push(obstacle_entity);
                 }
             }
+        }
+    }
+    
+    // Add collision debug components after all collision checks
+    for entity in collision_debug_entities {
+        // Double-check that the entity still exists
+        if let Some(mut entity_commands) = commands.get_entity(entity) {
+            entity_commands.insert(CollisionDebug::default());
         }
     }
 }
@@ -151,8 +166,11 @@ pub fn update_collision_debug(
         // Also make any child sprites flash red
         if let Some(children) = children {
             for child in children.iter() {
-                if let Ok(mut child_sprite) = child_sprites.get_mut(*child) {
-                    child_sprite.color = Color::RED;
+                // Check if the child entity still exists before accessing it
+                if child_sprites.contains(*child) {
+                    if let Ok(mut child_sprite) = child_sprites.get_mut(*child) {
+                        child_sprite.color = Color::RED;
+                    }
                 }
             }
         }
@@ -167,8 +185,11 @@ pub fn update_collision_debug(
                 // Also reset any child sprites
                 if let Some(children) = children {
                     for child in children.iter() {
-                        if let Ok(mut child_sprite) = child_sprites.get_mut(*child) {
-                            child_sprite.color = Color::WHITE;
+                        // Check if the child entity still exists before accessing it
+                        if child_sprites.contains(*child) {
+                            if let Ok(mut child_sprite) = child_sprites.get_mut(*child) {
+                                child_sprite.color = Color::WHITE;
+                            }
                         }
                     }
                 }
