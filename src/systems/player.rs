@@ -76,21 +76,21 @@ pub fn update_player_appearance(
     for (player, mut sprite) in query.iter_mut() {
         // Change player color based on weapon type for visual feedback
         match player.current_weapon {
-            WeaponType::Pistol => {
+            WeaponType::Dagger => {
                 sprite.color = Color::YELLOW;
-                info!("Player appearance updated to Pistol (Yellow)");
+                info!("Player appearance updated to Dagger (Yellow)");
             },
-            WeaponType::Shotgun => {
+            WeaponType::Sword => {
+                sprite.color = Color::rgb(0.0, 0.5, 1.0); // Blue
+                info!("Player appearance updated to Sword (Blue)");
+            },
+            WeaponType::Axe => {
                 sprite.color = Color::ORANGE;
-                info!("Player appearance updated to Shotgun (Orange)");
+                info!("Player appearance updated to Axe (Orange)");
             },
-            WeaponType::MachineGun => {
-                sprite.color = Color::CYAN;
-                info!("Player appearance updated to Machine Gun (Cyan)");
-            },
-            WeaponType::RocketLauncher => {
+            WeaponType::Hammer => {
                 sprite.color = Color::RED;
-                info!("Player appearance updated to Rocket Launcher (Red)");
+                info!("Player appearance updated to Hammer (Red)");
             },
         }
     }

@@ -565,26 +565,26 @@ fn update_weapon_ui(
             
             // Update weapon color based on type
             text.sections[1].style.color = match player.current_weapon {
-                WeaponType::Pistol => Color::YELLOW,
-                WeaponType::Shotgun => Color::ORANGE,
-                WeaponType::MachineGun => Color::CYAN,
-                WeaponType::RocketLauncher => Color::RED,
+                WeaponType::Dagger => Color::YELLOW,
+                WeaponType::Sword => Color::rgb(0.0, 0.5, 1.0), // Blue
+                WeaponType::Axe => Color::ORANGE,
+                WeaponType::Hammer => Color::RED,
             };
             
             // Update upgrades text
             if let Some(upgrades) = upgrades {
                 let mut upgrade_text = String::new();
                 
-                if upgrades.double_shot {
-                    upgrade_text.push_str("Double Shot, ");
+                if upgrades.area_attack {
+                    upgrade_text.push_str("Area Attack, ");
                 }
                 
-                if upgrades.triple_shot {
-                    upgrade_text.push_str("Triple Shot, ");
+                if upgrades.critical_hit_chance > 0.0 {
+                    upgrade_text.push_str(&format!("Crit {:.0}%, ", upgrades.critical_hit_chance * 100.0));
                 }
                 
-                if upgrades.rapid_fire_multiplier > 1.0 {
-                    upgrade_text.push_str(&format!("Rapid Fire x{:.1}, ", upgrades.rapid_fire_multiplier));
+                if upgrades.attack_speed_multiplier > 1.0 {
+                    upgrade_text.push_str(&format!("Speed x{:.1}, ", upgrades.attack_speed_multiplier));
                 }
                 
                 if upgrades.damage_multiplier > 1.0 {

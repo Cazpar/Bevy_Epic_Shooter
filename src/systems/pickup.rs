@@ -30,13 +30,13 @@ pub fn spawn_enemy_drops(
         if rng.gen::<f32>() <= DROP_CHANCE {
             // Determine what type of pickup to spawn
             let pickup_type = match rng.gen_range(0..=100) {
-                0..=20 => PickupType::Weapon(WeaponType::Pistol),
-                21..=35 => PickupType::Weapon(WeaponType::Shotgun),
-                36..=50 => PickupType::Weapon(WeaponType::MachineGun),
-                51..=60 => PickupType::Weapon(WeaponType::RocketLauncher),
-                61..=70 => PickupType::DoubleShot,
-                71..=80 => PickupType::TripleShot,
-                81..=90 => PickupType::RapidFire,
+                0..=20 => PickupType::Weapon(WeaponType::Dagger),
+                21..=35 => PickupType::Weapon(WeaponType::Sword),
+                36..=50 => PickupType::Weapon(WeaponType::Axe),
+                51..=60 => PickupType::Weapon(WeaponType::Hammer),
+                61..=70 => PickupType::AreaAttack,
+                71..=80 => PickupType::CriticalHit,
+                81..=90 => PickupType::AttackSpeed,
                 91..=95 => PickupType::IncreasedDamage,
                 _ => PickupType::HealthPack,
             };
@@ -50,15 +50,17 @@ pub fn spawn_enemy_drops(
 fn spawn_pickup(commands: &mut Commands, position: Vec3, pickup_type: PickupType) {
     // Determine color and size based on pickup type
     let (color, size) = match pickup_type {
-        PickupType::Weapon(WeaponType::Pistol) => (Color::YELLOW, Vec2::new(20.0, 10.0)),
-        PickupType::Weapon(WeaponType::Shotgun) => (Color::ORANGE, Vec2::new(20.0, 10.0)),
-        PickupType::Weapon(WeaponType::MachineGun) => (Color::CYAN, Vec2::new(20.0, 10.0)),
-        PickupType::Weapon(WeaponType::RocketLauncher) => (Color::RED, Vec2::new(20.0, 10.0)),
-        PickupType::DoubleShot => (Color::GREEN, Vec2::new(15.0, 15.0)),
-        PickupType::TripleShot => (Color::rgb(0.0, 0.8, 0.0), Vec2::new(15.0, 15.0)),
-        PickupType::RapidFire => (Color::PURPLE, Vec2::new(15.0, 15.0)),
+        PickupType::Weapon(WeaponType::Dagger) => (Color::YELLOW, Vec2::new(20.0, 10.0)),
+        PickupType::Weapon(WeaponType::Sword) => (Color::rgb(0.0, 0.5, 1.0), Vec2::new(20.0, 10.0)),
+        PickupType::Weapon(WeaponType::Axe) => (Color::ORANGE, Vec2::new(20.0, 10.0)),
+        PickupType::Weapon(WeaponType::Hammer) => (Color::RED, Vec2::new(20.0, 10.0)),
+        PickupType::AreaAttack => (Color::GREEN, Vec2::new(15.0, 15.0)),
+        PickupType::CriticalHit => (Color::rgb(0.0, 0.8, 0.0), Vec2::new(15.0, 15.0)),
+        PickupType::AttackSpeed => (Color::PURPLE, Vec2::new(15.0, 15.0)),
         PickupType::IncreasedDamage => (Color::rgb(1.0, 0.0, 0.5), Vec2::new(15.0, 15.0)),
         PickupType::HealthPack => (Color::rgb(1.0, 0.0, 0.3), Vec2::new(15.0, 15.0)),
+        PickupType::StaminaBoost => (Color::rgb(0.0, 0.8, 0.8), Vec2::new(15.0, 15.0)),
+        PickupType::ArmorBoost => (Color::rgb(0.5, 0.5, 0.5), Vec2::new(15.0, 15.0)),
     };
     
     commands.spawn((
@@ -144,20 +146,19 @@ pub fn handle_pickup_collection(
                         *weapon = Weapon::new(weapon_type);
                         info!("Player picked up weapon: {:?}", weapon_type);
                     },
-                    PickupType::DoubleShot => {
-                        weapon_upgrades.double_shot = true;
-                        weapon_upgrades.triple_shot = false; // Double shot overrides triple shot
-                        info!("Player picked up double shot upgrade!");
+                    PickupType::AreaAttack => {
+                        weapon_upgrades.area_attack = true;
+                        info!("Player picked up area attack upgrade!");
                     },
-                    PickupType::TripleShot => {
-                        weapon_upgrades.triple_shot = true;
-                        weapon_upgrades.double_shot = false; // Triple shot overrides double shot
-                        info!("Player picked up triple shot upgrade!");
+                    PickupType::CriticalHit => {
+                        // Increase critical hit chance by 10% (stacks up to 50%)
+                        weapon_upgrades.critical_hit_chance = (weapon_upgrades.critical_hit_chance + 0.1).min(0.5);
+                        info!("Player picked up critical hit upgrade! New chance: {:.1}%", weapon_upgrades.critical_hit_chance * 100.0);
                     },
-                    PickupType::RapidFire => {
-                        // Increase fire rate by 30% (stacks up to a limit)
-                        weapon_upgrades.rapid_fire_multiplier = (weapon_upgrades.rapid_fire_multiplier + 0.3).min(3.0);
-                        info!("Player picked up rapid fire upgrade! New multiplier: {}", weapon_upgrades.rapid_fire_multiplier);
+                    PickupType::AttackSpeed => {
+                        // Increase attack speed by 30% (stacks up to a limit)
+                        weapon_upgrades.attack_speed_multiplier = (weapon_upgrades.attack_speed_multiplier + 0.3).min(3.0);
+                        info!("Player picked up attack speed upgrade! New multiplier: {}", weapon_upgrades.attack_speed_multiplier);
                     },
                     PickupType::IncreasedDamage => {
                         // Increase damage by 20% (stacks up to a limit)
@@ -168,6 +169,16 @@ pub fn handle_pickup_collection(
                         // Increase player health by 25 (up to a max of 100)
                         player.health = (player.health + 25.0).min(100.0);
                         info!("Player picked up health pack! New health: {}", player.health);
+                    },
+                    PickupType::StaminaBoost => {
+                        // For now, just increase health as we don't have stamina yet
+                        player.health = (player.health + 15.0).min(100.0);
+                        info!("Player picked up stamina boost! New health: {}", player.health);
+                    },
+                    PickupType::ArmorBoost => {
+                        // For now, just increase health as we don't have armor yet
+                        player.health = (player.health + 20.0).min(100.0);
+                        info!("Player picked up armor boost! New health: {}", player.health);
                     },
                 }
                 
