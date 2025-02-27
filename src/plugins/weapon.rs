@@ -11,10 +11,9 @@ impl Plugin for WeaponPlugin {
             .add_systems(
                 Update, 
                 (
-                    player_shooting,
-                    projectile_movement,
-                    handle_projectile_enemy_collision,
-                    handle_projectile_obstacle_damage
+                    player_attacking,
+                    update_attacking_state,
+                    handle_melee_attack_collisions
                 ).run_if(in_state(GameState::Playing))
             );
     }

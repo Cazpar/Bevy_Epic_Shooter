@@ -4,11 +4,13 @@ use crate::components::weapon::WeaponType;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PickupType {
     Weapon(WeaponType),
-    DoubleShot,
-    TripleShot,
-    RapidFire,
-    IncreasedDamage,
-    HealthPack,
+    AreaAttack,     // Increases attack area
+    CriticalHit,    // Chance for critical hits
+    AttackSpeed,    // Faster attack speed
+    IncreasedDamage, // More damage
+    HealthPack,     // Restore health
+    StaminaBoost,   // Increase stamina/energy
+    ArmorBoost,     // Damage reduction
 }
 
 #[derive(Component)]
@@ -31,18 +33,18 @@ impl Pickup {
 // Component to track weapon upgrades
 #[derive(Component, Default)]
 pub struct WeaponUpgrades {
-    pub double_shot: bool,
-    pub triple_shot: bool,
-    pub rapid_fire_multiplier: f32, // 1.0 = normal, 2.0 = twice as fast
+    pub area_attack: bool,       // Wider attack area
+    pub critical_hit_chance: f32, // Chance to deal critical damage (0.0 to 1.0)
+    pub attack_speed_multiplier: f32, // 1.0 = normal, 2.0 = twice as fast
     pub damage_multiplier: f32,     // 1.0 = normal, 2.0 = twice the damage
 }
 
 impl WeaponUpgrades {
     pub fn new() -> Self {
         Self {
-            double_shot: false,
-            triple_shot: false,
-            rapid_fire_multiplier: 1.0,
+            area_attack: false,
+            critical_hit_chance: 0.0,
+            attack_speed_multiplier: 1.0,
             damage_multiplier: 1.0,
         }
     }
