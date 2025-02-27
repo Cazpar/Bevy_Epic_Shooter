@@ -4,6 +4,10 @@ use crate::components::weapon::{Weapon, WeaponType};
 use crate::components::pickup::WeaponUpgrades;
 use crate::systems::player::*;
 
+// Component to mark the weapon indicator
+#[derive(Component)]
+pub struct WeaponIndicator;
+
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
@@ -63,10 +67,6 @@ fn spawn_player(
     
     info!("Player spawned with default Pistol weapon");
 }
-
-// Component to mark the weapon indicator
-#[derive(Component)]
-struct WeaponIndicator;
 
 // System to update the weapon indicator
 pub fn update_weapon_indicator(
