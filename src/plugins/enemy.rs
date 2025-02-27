@@ -10,7 +10,10 @@ impl Plugin for EnemyPlugin {
             // Add enemy movement system that only runs in the Playing state
             .add_systems(
                 Update, 
-                enemy_movement.run_if(in_state(GameState::Playing))
+                (
+                    enemy_movement,
+                    update_enemy_animation
+                ).run_if(in_state(GameState::Playing))
             )
             // Spawn enemies every 2 seconds, but only in the Playing state
             .add_systems(

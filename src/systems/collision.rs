@@ -36,10 +36,14 @@ pub fn handle_player_obstacle_collision(
                 player_transform.translation.y += direction.y * push_strength;
                 
                 // Add debug component to player for visual feedback - only if it still exists
-                commands.entity(player_entity).insert(CollisionDebug::default());
+                if let Some(mut entity_commands) = commands.get_entity(player_entity) {
+                    entity_commands.insert(CollisionDebug::default());
+                }
                 
                 // Add debug component to obstacle for visual feedback - only if it still exists
-                commands.entity(obstacle_entity).insert(CollisionDebug::default());
+                if let Some(mut entity_commands) = commands.get_entity(obstacle_entity) {
+                    entity_commands.insert(CollisionDebug::default());
+                }
                 
                 // Print debug info
                 // info!("Player collision with obstacle: distance={}, min_distance={}", distance, min_distance);
@@ -77,10 +81,14 @@ pub fn handle_enemy_obstacle_collision(
                 enemy_transform.translation.y += direction.y * push_strength;
                 
                 // Add debug component to enemy for visual feedback - only if it still exists
-                commands.entity(enemy_entity).insert(CollisionDebug::default());
+                if let Some(mut entity_commands) = commands.get_entity(enemy_entity) {
+                    entity_commands.insert(CollisionDebug::default());
+                }
                 
                 // Add debug component to obstacle for visual feedback - only if it still exists
-                commands.entity(obstacle_entity).insert(CollisionDebug::default());
+                if let Some(mut entity_commands) = commands.get_entity(obstacle_entity) {
+                    entity_commands.insert(CollisionDebug::default());
+                }
                 
                 // Print debug info
                 // info!("Enemy collision with obstacle: distance={}, min_distance={}", distance, min_distance);
@@ -115,7 +123,9 @@ pub fn handle_projectile_obstacle_collision(
                 }
                 
                 // Add debug component to obstacle for visual feedback - only if it still exists
-                commands.entity(obstacle_entity).insert(CollisionDebug::default());
+                if let Some(mut entity_commands) = commands.get_entity(obstacle_entity) {
+                    entity_commands.insert(CollisionDebug::default());
+                }
                 
                 // Print debug info
                 info!("Projectile collision with obstacle: distance={}, min_distance={}", distance, min_distance);

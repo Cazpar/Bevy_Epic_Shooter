@@ -2,12 +2,15 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use crate::components::enemy::{Enemy, EnemyType};
 use crate::components::player::Player;
+use crate::components::animation::{SpriteAnimation, AnimatedSprite, AnimationState};
+use crate::systems::animation::load_animation_frames;
 use rand::{thread_rng, Rng};
 
 // Spawn a new enemy at a random position around the screen edges
 pub fn spawn_enemy(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
+    asset_server: Res<AssetServer>,
 ) {
     let window = window_query.get_single().unwrap();
     let window_width = window.width();
@@ -34,20 +37,50 @@ pub fn spawn_enemy(
         _ => EnemyType::Shooter,
     };
     
-    // Select enemy color and size based on type
-    let (color, size) = match enemy_type {
-        EnemyType::Basic => (Color::rgb(0.9, 0.3, 0.3), Vec2::new(25.0, 25.0)), // Red
-        EnemyType::Fast => (Color::rgb(0.3, 0.9, 0.3), Vec2::new(20.0, 20.0)),  // Green
-        EnemyType::Tank => (Color::rgb(0.5, 0.5, 0.5), Vec2::new(40.0, 40.0)),  // Gray
-        EnemyType::Shooter => (Color::rgb(0.9, 0.6, 0.1), Vec2::new(25.0, 25.0)), // Orange
+    // Randomly select enemy variant (1, 2, or 3)
+    let enemy_variant = rng.gen_range(1..=3);
+    
+    // Select enemy folder based on type
+    let enemy_folder = match enemy_type {
+        EnemyType::Basic => "Skeleton-Warriors",
+        EnemyType::Fast => "Fallen-Angels",
+        EnemyType::Tank => "Golems",
+        EnemyType::Shooter => "Zombie-Villagers",
     };
+    
+    // Select character model based on enemy type
+    let character_model = match enemy_type {
+        EnemyType::Basic => format!("Skeleton_Warrior_{}", enemy_variant),
+        EnemyType::Fast => format!("Fallen_Angels_{}", enemy_variant),
+        EnemyType::Tank => format!("Golem_{}", enemy_variant),
+        EnemyType::Shooter => format!("Zombie_Villager_{}", enemy_variant),
+    };
+    
+    // Select animation prefix based on enemy type
+    let animation_prefix = match enemy_type {
+        EnemyType::Basic => "0_Skeleton_Warrior_",
+        EnemyType::Fast => "0_Fallen_Angels_",
+        EnemyType::Tank => "0_Golem_",
+        EnemyType::Shooter => "0_Zombie_Villager_",
+    };
+    
+    // Load idle animation frames for the enemy
+    let idle_frames = load_animation_frames(
+        &asset_server,
+        &format!("sprites/enemies/{}/{}/PNG/PNG Sequences/Idle", enemy_folder, character_model),
+        18,
+        &format!("{}{}", animation_prefix, "Idle_")
+    );
+    
+    // Create the idle animation
+    let idle_animation = SpriteAnimation::new(idle_frames, 12.0, true);
     
     // Spawn the enemy entity with explicit z-index
     let enemy_entity = commands.spawn((
         SpriteBundle {
+            texture: idle_animation.frames[0].clone(),
             sprite: Sprite {
-                color,
-                custom_size: Some(size),
+                custom_size: Some(Vec2::new(80.0, 80.0)),
                 ..default()
             },
             transform: Transform::from_translation(Vec3::new(spawn_x, spawn_y, 1.0)), // Set z to 1.0 for body
@@ -55,18 +88,20 @@ pub fn spawn_enemy(
             ..default()
         },
         Enemy::new(enemy_type),
+        idle_animation,
+        AnimationState::default(),
+        AnimatedSprite,
     )).id();
     
     // Add a direction indicator as a child entity with higher z-index
-    let indicator_size = size.x * 0.5;
     commands.spawn((
         SpriteBundle {
             sprite: Sprite {
                 color: Color::rgb(0.9, 0.9, 0.9), // Light gray
-                custom_size: Some(Vec2::new(indicator_size, indicator_size * 0.3)),
+                custom_size: Some(Vec2::new(15.0, 5.0)),
                 ..default()
             },
-            transform: Transform::from_translation(Vec3::new(size.x * 0.6, 0.0, 1.1)), // Set z to 1.1 for gun
+            transform: Transform::from_translation(Vec3::new(30.0, 0.0, 1.1)), // Set z to 1.1 for gun
             visibility: Visibility::Visible, // Explicitly set visibility
             ..default()
         },
@@ -101,6 +136,89 @@ pub fn enemy_movement(
         if direction != Vec2::ZERO {
             enemy.rotation = direction.y.atan2(direction.x);
             transform.rotation = Quat::from_rotation_z(enemy.rotation);
+        }
+    }
+}
+
+// Update enemy animation based on state
+pub fn update_enemy_animation(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut enemy_query: Query<(Entity, &Enemy, &mut AnimationState, &Transform), (With<Enemy>, With<AnimatedSprite>)>,
+    player_query: Query<&Transform, With<Player>>,
+) {
+    // Get player position
+    let player_transform = if let Ok(transform) = player_query.get_single() {
+        transform
+    } else {
+        return; // No player found
+    };
+    
+    let player_pos = player_transform.translation.truncate();
+    
+    for (entity, enemy, mut animation_state, enemy_transform) in enemy_query.iter_mut() {
+        // Determine enemy variant and folder
+        let enemy_variant = 1; // Default to variant 1
+        
+        // Select enemy folder based on type
+        let enemy_folder = match enemy.enemy_type {
+            EnemyType::Basic => "Skeleton-Warriors",
+            EnemyType::Fast => "Fallen-Angels",
+            EnemyType::Tank => "Golems",
+            EnemyType::Shooter => "Zombie-Villagers",
+        };
+        
+        // Select character model based on enemy type
+        let character_model = match enemy.enemy_type {
+            EnemyType::Basic => format!("Skeleton_Warrior_{}", enemy_variant),
+            EnemyType::Fast => format!("Fallen_Angels_{}", enemy_variant),
+            EnemyType::Tank => format!("Golem_{}", enemy_variant),
+            EnemyType::Shooter => format!("Zombie_Villager_{}", enemy_variant),
+        };
+        
+        // Select animation prefix based on enemy type
+        let animation_prefix = match enemy.enemy_type {
+            EnemyType::Basic => "0_Skeleton_Warrior_",
+            EnemyType::Fast => "0_Fallen_Angels_",
+            EnemyType::Tank => "0_Golem_",
+            EnemyType::Shooter => "0_Zombie_Villager_",
+        };
+        
+        // Determine animation based on distance to player
+        let enemy_pos = enemy_transform.translation.truncate();
+        let distance_to_player = (player_pos - enemy_pos).length();
+        
+        let new_animation = if distance_to_player < 200.0 {
+            "walking".to_string()
+        } else {
+            "idle".to_string()
+        };
+        
+        // Only change animation if it's different from the current one
+        if new_animation != animation_state.current_animation {
+            animation_state.current_animation = new_animation.clone();
+            
+            // Load the appropriate animation frames
+            let frames = match new_animation.as_str() {
+                "walking" => load_animation_frames(
+                    &asset_server,
+                    &format!("sprites/enemies/{}/{}/PNG/PNG Sequences/Walking", enemy_folder, character_model),
+                    18,
+                    &format!("{}{}", animation_prefix, "Walking_")
+                ),
+                _ => load_animation_frames(
+                    &asset_server,
+                    &format!("sprites/enemies/{}/{}/PNG/PNG Sequences/Idle", enemy_folder, character_model),
+                    18,
+                    &format!("{}{}", animation_prefix, "Idle_")
+                ),
+            };
+            
+            // Create the new animation
+            let new_animation = SpriteAnimation::new(frames, 12.0, true);
+            
+            // Replace the old animation component
+            commands.entity(entity).insert(new_animation);
         }
     }
 } 
