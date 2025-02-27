@@ -4,7 +4,6 @@ use crate::components::pickup::{Pickup, PickupType, WeaponUpgrades};
 use crate::components::player::Player;
 use crate::components::enemy::Enemy;
 use crate::components::weapon::{Weapon, WeaponType};
-use crate::resources::game_state::GameState;
 
 // Chance for an enemy to drop a pickup when defeated
 const DROP_CHANCE: f32 = 0.9; // 90% chance for testing (was 40%)
@@ -82,14 +81,8 @@ fn spawn_pickup(commands: &mut Commands, position: Vec3, pickup_type: PickupType
 pub fn update_pickups(
     mut commands: Commands,
     time: Res<Time>,
-    game_state: Res<GameState>,
     mut query: Query<(Entity, &mut Transform, &mut Pickup)>,
 ) {
-    // Skip if game is paused or over
-    if game_state.paused || game_state.game_over {
-        return;
-    }
-    
     for (entity, mut transform, mut pickup) in query.iter_mut() {
         // Update lifetime
         pickup.lifetime -= time.delta_seconds();
