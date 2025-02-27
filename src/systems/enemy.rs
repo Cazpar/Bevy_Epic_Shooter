@@ -2,20 +2,13 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use crate::components::enemy::{Enemy, EnemyType};
 use crate::components::player::Player;
-use crate::resources::game_state::GameState;
 use rand::{thread_rng, Rng};
 
 // Spawn a new enemy at a random position around the screen edges
 pub fn spawn_enemy(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    game_state: Res<GameState>,
 ) {
-    // Skip spawning if game is paused or over
-    if game_state.paused || game_state.game_over {
-        return;
-    }
-    
     let window = window_query.get_single().unwrap();
     let window_width = window.width();
     let window_height = window.height();
@@ -83,15 +76,9 @@ pub fn spawn_enemy(
 // Move enemies toward the player
 pub fn enemy_movement(
     time: Res<Time>,
-    game_state: Res<GameState>,
     player_query: Query<&Transform, With<Player>>,
     mut enemy_query: Query<(&mut Transform, &mut Enemy), Without<Player>>,
 ) {
-    // Skip movement if game is paused or over
-    if game_state.paused || game_state.game_over {
-        return;
-    }
-    
     // Get player position
     let player_transform = if let Ok(transform) = player_query.get_single() {
         transform

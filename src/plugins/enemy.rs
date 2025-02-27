@@ -1,14 +1,24 @@
 use bevy::prelude::*;
 use crate::systems::enemy::*;
+use crate::resources::game_state::GameState;
 
 pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(Update, enemy_movement)
-            // Spawn enemies every 2 seconds
-            .add_systems(Update, spawn_enemy.run_if(on_timer(std::time::Duration::from_secs_f32(2.0))));
+            // Add enemy movement system that only runs in the Playing state
+            .add_systems(
+                Update, 
+                enemy_movement.run_if(in_state(GameState::Playing))
+            )
+            // Spawn enemies every 2 seconds, but only in the Playing state
+            .add_systems(
+                Update, 
+                spawn_enemy
+                    .run_if(on_timer(std::time::Duration::from_secs_f32(2.0)))
+                    .run_if(in_state(GameState::Playing))
+            );
     }
 }
 
