@@ -675,15 +675,22 @@ fn spawn_menu_background_elements(
     let window = window_query.single();
     let mut rng = rand::thread_rng();
     
-    // Spawn multiple decorative elements
-    for i in 0..20 {
-        let x = rand::random::<f32>() * window.width() - window.width() / 2.0;
-        let y = rand::random::<f32>() * window.height() - window.height() / 2.0;
+    // Calculate window dimensions with extra padding to ensure elements spawn beyond visible area
+    let width_range = window.width() * 1.5;
+    let height_range = window.height() * 1.5;
+    let center_x_offset = 100.0; // Offset to match the camera's initial position
+    let center_y_offset = 50.0;
+    
+    // Spawn more decorative elements for a richer background
+    for i in 0..50 {
+        // Distribute elements across a wider area, centered around the camera's initial position
+        let x = rand::random::<f32>() * width_range - width_range / 2.0 + center_x_offset;
+        let y = rand::random::<f32>() * height_range - height_range / 2.0 + center_y_offset;
         
-        // Determine element type
-        let (size, color, speed, rotation_speed) = match i % 3 {
-            0 => { // Enemy-like
-                let size = rand::random::<f32>() * 10.0 + 15.0;
+        // Determine element type with more variety
+        let (size, color, speed, rotation_speed) = match i % 5 {
+            0 => { // Enemy-like (red)
+                let size = rand::random::<f32>() * 15.0 + 20.0;
                 (
                     Vec2::new(size, size),
                     Color::rgba(0.8, 0.2, 0.2, 0.5),
@@ -691,8 +698,8 @@ fn spawn_menu_background_elements(
                     rand::random::<f32>() * 1.0 - 0.5,
                 )
             },
-            1 => { // Pickup-like
-                let size = rand::random::<f32>() * 5.0 + 10.0;
+            1 => { // Pickup-like (green)
+                let size = rand::random::<f32>() * 8.0 + 12.0;
                 (
                     Vec2::new(size, size),
                     Color::rgba(0.2, 0.8, 0.2, 0.5),
@@ -700,8 +707,8 @@ fn spawn_menu_background_elements(
                     rand::random::<f32>() * 2.0 - 1.0,
                 )
             },
-            _ => { // Projectile-like
-                let width = rand::random::<f32>() * 5.0 + 8.0;
+            2 => { // Projectile-like (yellow)
+                let width = rand::random::<f32>() * 8.0 + 10.0;
                 let height = width * 0.4;
                 (
                     Vec2::new(width, height),
@@ -710,12 +717,31 @@ fn spawn_menu_background_elements(
                     0.0,
                 )
             },
+            3 => { // Blue element (power-up like)
+                let size = rand::random::<f32>() * 10.0 + 15.0;
+                (
+                    Vec2::new(size, size),
+                    Color::rgba(0.2, 0.2, 0.9, 0.5),
+                    rand::random::<f32>() * 18.0 + 8.0,
+                    rand::random::<f32>() * 3.0 - 1.5,
+                )
+            },
+            _ => { // Purple element (special)
+                let width = rand::random::<f32>() * 12.0 + 15.0;
+                let height = width * 0.8;
+                (
+                    Vec2::new(width, height),
+                    Color::rgba(0.8, 0.2, 0.8, 0.5),
+                    rand::random::<f32>() * 25.0 + 15.0,
+                    rand::random::<f32>() * 2.0 - 1.0,
+                )
+            },
         };
         
-        // Random direction
+        // Random direction with bias toward horizontal movement for more interesting patterns
         let direction = Vec2::new(
             rand::random::<f32>() * 2.0 - 1.0,
-            rand::random::<f32>() * 2.0 - 1.0,
+            (rand::random::<f32>() * 1.6 - 0.8) * 0.8, // Reduced vertical component
         ).normalize();
         
         // Spawn the element
