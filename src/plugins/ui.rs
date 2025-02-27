@@ -75,7 +75,7 @@ struct StartPromptAnimation {
 impl Default for TitleAnimation {
     fn default() -> Self {
         Self {
-            timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+            timer: Timer::from_seconds(0.8, TimerMode::Repeating),
             scale_up: true,
         }
     }
@@ -627,11 +627,11 @@ fn animate_main_menu(
         animation.timer.tick(time.delta());
         
         if animation.timer.just_finished() {
-            // Pulse effect for title
+            // Pulse effect for title - much more subtle
             let scale = if animation.scale_up {
-                1.05
+                1.02
             } else {
-                0.95
+                0.98
             };
             
             for section in text.sections.iter_mut() {
