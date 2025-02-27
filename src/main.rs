@@ -11,9 +11,15 @@ use resources::game_state::GameState;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Bevy Epic Shooter".into(),
+                resolution: (1280.0, 720.0).into(),
+                ..default()
+            }),
+            ..default()
+        }))
         .add_plugins(plugins::GamePlugins)
-        .insert_resource(GameState::new())
         .add_systems(Startup, setup)
         .run();
 }

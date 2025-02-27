@@ -1,22 +1,15 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use crate::components::player::Player;
-use crate::resources::game_state::GameState;
 use crate::components::weapon::WeaponType;
 
 pub fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
     time: Res<Time>,
-    game_state: Res<GameState>,
     mut query: Query<(&mut Transform, &mut Player)>,
     q_window: Query<&Window, With<PrimaryWindow>>,
     q_camera: Query<(&Camera, &GlobalTransform)>,
 ) {
-    // Skip movement if game is paused or over
-    if game_state.paused || game_state.game_over {
-        return;
-    }
-    
     // Get the window and camera
     let Ok(window) = q_window.get_single() else {
         return; // No window found

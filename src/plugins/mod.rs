@@ -6,6 +6,7 @@ pub mod pickup;
 pub mod ui;
 pub mod collision;
 pub mod camera;
+pub mod game_state;
 
 
 use bevy::prelude::*;
@@ -17,6 +18,7 @@ use pickup::PickupPlugin;
 use ui::UiPlugin;
 use collision::CollisionPlugin;
 use camera::CameraPlugin;
+use game_state::GameStatePlugin;
 
 
 /// Collection of all game plugins
@@ -25,7 +27,8 @@ pub struct GamePlugins;
 impl Plugin for GamePlugins {
     fn build(&self, app: &mut App) {
         app
-            .add_plugins(MapPlugin)     // Add the map plugin first so it renders behind everything else
+            .add_plugins(GameStatePlugin)  // Add the game state plugin first to manage game states
+            .add_plugins(MapPlugin)        // Add the map plugin so it renders behind everything else
             .add_plugins(PlayerPlugin)
             .add_plugins(EnemyPlugin)
             .add_plugins(WeaponPlugin)
