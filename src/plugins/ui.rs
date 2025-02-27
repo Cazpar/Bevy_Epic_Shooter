@@ -11,14 +11,14 @@ impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
         app
             // Setup systems
-            .add_systems(OnEnter(GameState::MainMenu), setup_main_menu)
+            .add_systems(OnEnter(GameState::MainMenu), (setup_main_menu, spawn_menu_background_elements))
             .add_systems(OnEnter(GameState::Playing), setup_game_ui)
             .add_systems(OnEnter(GameState::Paused), setup_pause_menu)
             .add_systems(OnEnter(GameState::GameOver), setup_game_over_screen)
             .add_systems(OnEnter(GameState::LevelComplete), setup_level_complete_screen)
             
             // Cleanup systems
-            .add_systems(OnExit(GameState::MainMenu), cleanup_ui::<MainMenuUI>)
+            .add_systems(OnExit(GameState::MainMenu), (cleanup_ui::<MainMenuUI>, cleanup_menu_background))
             .add_systems(OnExit(GameState::Playing), cleanup_ui::<GameUI>)
             .add_systems(OnExit(GameState::Paused), cleanup_ui::<PauseMenuUI>)
             .add_systems(OnExit(GameState::GameOver), cleanup_ui::<GameOverUI>)
@@ -27,7 +27,8 @@ impl Plugin for UiPlugin {
             // Update systems
             .add_systems(Update, update_health_ui.run_if(in_state(GameState::Playing)))
             .add_systems(Update, update_weapon_ui.run_if(in_state(GameState::Playing)))
-            .add_systems(Update, update_score_ui.run_if(in_state(GameState::Playing)));
+            .add_systems(Update, update_score_ui.run_if(in_state(GameState::Playing)))
+            .add_systems(Update, (animate_main_menu, animate_menu_background).run_if(in_state(GameState::MainMenu)));
     }
 }
 
@@ -57,6 +58,38 @@ struct WeaponText;
 #[derive(Component)]
 struct ScoreText;
 
+// Animation component for the title
+#[derive(Component)]
+struct TitleAnimation {
+    timer: Timer,
+    scale_up: bool,
+}
+
+// Animation component for the start prompt
+#[derive(Component)]
+struct StartPromptAnimation {
+    timer: Timer,
+    visible: bool,
+}
+
+impl Default for TitleAnimation {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+            scale_up: true,
+        }
+    }
+}
+
+impl Default for StartPromptAnimation {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+            visible: true,
+        }
+    }
+}
+
 // Generic cleanup system for UI elements
 fn cleanup_ui<T: Component>(mut commands: Commands, query: Query<Entity, With<T>>) {
     for entity in query.iter() {
@@ -79,29 +112,47 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     justify_content: JustifyContent::Center,
                     ..default()
                 },
+                background_color: Color::rgba(0.0, 0.0, 0.0, 0.5).into(), // Semi-transparent background
                 ..default()
             },
             MainMenuUI,
         ))
         .with_children(|parent| {
-            // Title
-            parent.spawn(
+            // Title with glow effect
+            parent.spawn((
                 TextBundle::from_section(
                     "BEVY EPIC SHOOTER",
                     TextStyle {
                         font: font.clone(),
-                        font_size: 64.0,
-                        color: Color::rgb(0.9, 0.9, 0.9),
+                        font_size: 80.0,
+                        color: Color::rgb(0.9, 0.9, 1.0),
                     },
                 )
                 .with_style(Style {
                     margin: UiRect::all(Val::Px(20.0)),
                     ..default()
                 }),
+                TitleAnimation::default(),
+            ));
+            
+            // Subtitle
+            parent.spawn(
+                TextBundle::from_section(
+                    "A fast-paced top-down shooter",
+                    TextStyle {
+                        font: font.clone(),
+                        font_size: 24.0,
+                        color: Color::rgb(0.7, 0.7, 0.8),
+                    },
+                )
+                .with_style(Style {
+                    margin: UiRect::bottom(Val::Px(50.0)),
+                    ..default()
+                }),
             );
             
-            // Start game instruction
-            parent.spawn(
+            // Start game instruction with animation
+            parent.spawn((
                 TextBundle::from_section(
                     "Press SPACE or ENTER to start",
                     TextStyle {
@@ -112,6 +163,33 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                 )
                 .with_style(Style {
                     margin: UiRect::all(Val::Px(20.0)),
+                    ..default()
+                }),
+                StartPromptAnimation::default(),
+            ));
+            
+            // Controls info
+            parent.spawn(
+                TextBundle::from_sections([
+                    TextSection::new(
+                        "Controls:\n",
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: 24.0,
+                            color: Color::rgb(0.9, 0.9, 0.9),
+                        },
+                    ),
+                    TextSection::new(
+                        "WASD - Move\nMouse - Aim\nLeft Click/Space - Shoot\nESC - Pause",
+                        TextStyle {
+                            font: font.clone(),
+                            font_size: 20.0,
+                            color: Color::rgb(0.7, 0.7, 0.7),
+                        },
+                    ),
+                ])
+                .with_style(Style {
+                    margin: UiRect::top(Val::Px(50.0)),
                     ..default()
                 }),
             );
@@ -535,5 +613,200 @@ fn update_score_ui(
 ) {
     if let Ok(mut text) = query.get_single_mut() {
         text.sections[1].value = game_data.score.to_string();
+    }
+}
+
+// Add this system to the UiPlugin's build method
+fn animate_main_menu(
+    time: Res<Time>,
+    mut title_query: Query<(&mut TitleAnimation, &mut Text, &mut Style)>,
+    mut prompt_query: Query<(&mut StartPromptAnimation, &mut Text), Without<TitleAnimation>>,
+) {
+    // Animate title
+    for (mut animation, mut text, mut style) in title_query.iter_mut() {
+        animation.timer.tick(time.delta());
+        
+        if animation.timer.just_finished() {
+            // Pulse effect for title
+            let scale = if animation.scale_up {
+                1.05
+            } else {
+                0.95
+            };
+            
+            for section in text.sections.iter_mut() {
+                section.style.font_size = section.style.font_size * scale;
+            }
+            
+            animation.scale_up = !animation.scale_up;
+        }
+    }
+    
+    // Animate start prompt (blinking)
+    for (mut animation, mut text) in prompt_query.iter_mut() {
+        animation.timer.tick(time.delta());
+        
+        if animation.timer.just_finished() {
+            animation.visible = !animation.visible;
+            
+            for section in text.sections.iter_mut() {
+                section.style.color = if animation.visible {
+                    Color::rgb(0.8, 0.8, 0.8)
+                } else {
+                    Color::rgba(0.8, 0.8, 0.8, 0.0)
+                };
+            }
+        }
+    }
+}
+
+// Component to mark background elements
+#[derive(Component)]
+struct MenuBackground {
+    speed: f32,
+    rotation_speed: f32,
+}
+
+// Spawn decorative elements in the background
+fn spawn_menu_background_elements(
+    mut commands: Commands,
+    window_query: Query<&Window>,
+) {
+    let window = window_query.single();
+    let mut rng = rand::thread_rng();
+    
+    // Spawn multiple decorative elements
+    for i in 0..20 {
+        let x = rand::random::<f32>() * window.width() - window.width() / 2.0;
+        let y = rand::random::<f32>() * window.height() - window.height() / 2.0;
+        
+        // Determine element type
+        let (size, color, speed, rotation_speed) = match i % 3 {
+            0 => { // Enemy-like
+                let size = rand::random::<f32>() * 10.0 + 15.0;
+                (
+                    Vec2::new(size, size),
+                    Color::rgba(0.8, 0.2, 0.2, 0.5),
+                    rand::random::<f32>() * 20.0 + 10.0,
+                    rand::random::<f32>() * 1.0 - 0.5,
+                )
+            },
+            1 => { // Pickup-like
+                let size = rand::random::<f32>() * 5.0 + 10.0;
+                (
+                    Vec2::new(size, size),
+                    Color::rgba(0.2, 0.8, 0.2, 0.5),
+                    rand::random::<f32>() * 15.0 + 5.0,
+                    rand::random::<f32>() * 2.0 - 1.0,
+                )
+            },
+            _ => { // Projectile-like
+                let width = rand::random::<f32>() * 5.0 + 8.0;
+                let height = width * 0.4;
+                (
+                    Vec2::new(width, height),
+                    Color::rgba(1.0, 1.0, 0.0, 0.5),
+                    rand::random::<f32>() * 30.0 + 20.0,
+                    0.0,
+                )
+            },
+        };
+        
+        // Random direction
+        let direction = Vec2::new(
+            rand::random::<f32>() * 2.0 - 1.0,
+            rand::random::<f32>() * 2.0 - 1.0,
+        ).normalize();
+        
+        // Spawn the element
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    color,
+                    custom_size: Some(size),
+                    ..default()
+                },
+                transform: Transform::from_translation(Vec3::new(x, y, 0.0))
+                    .with_rotation(Quat::from_rotation_z(direction.y.atan2(direction.x))),
+                ..default()
+            },
+            MenuBackground {
+                speed,
+                rotation_speed,
+            },
+            MenuBackgroundMovement {
+                direction,
+            },
+        ));
+    }
+}
+
+// Component to track movement direction
+#[derive(Component)]
+struct MenuBackgroundMovement {
+    direction: Vec2,
+}
+
+// Animate background elements
+fn animate_menu_background(
+    time: Res<Time>,
+    mut commands: Commands,
+    window_query: Query<&Window>,
+    mut query: Query<(Entity, &mut Transform, &MenuBackground, &mut MenuBackgroundMovement)>,
+) {
+    let window = window_query.single();
+    let half_width = window.width() / 2.0;
+    let half_height = window.height() / 2.0;
+    
+    for (entity, mut transform, bg, mut movement) in query.iter_mut() {
+        // Move in the current direction
+        let delta = movement.direction * bg.speed * time.delta_seconds();
+        transform.translation.x += delta.x;
+        transform.translation.y += delta.y;
+        
+        // Rotate if needed
+        if bg.rotation_speed != 0.0 {
+            transform.rotate_z(bg.rotation_speed * time.delta_seconds());
+        }
+        
+        // Check if out of bounds
+        let pos = transform.translation;
+        let out_of_bounds = pos.x < -half_width - 50.0 || pos.x > half_width + 50.0 || 
+                           pos.y < -half_height - 50.0 || pos.y > half_height + 50.0;
+        
+        if out_of_bounds {
+            // Respawn on the opposite side with a slight randomization
+            let (new_x, new_y) = if pos.x < -half_width - 50.0 {
+                (half_width + 20.0, rand::random::<f32>() * window.height() - half_height)
+            } else if pos.x > half_width + 50.0 {
+                (-half_width - 20.0, rand::random::<f32>() * window.height() - half_height)
+            } else if pos.y < -half_height - 50.0 {
+                (rand::random::<f32>() * window.width() - half_width, half_height + 20.0)
+            } else {
+                (rand::random::<f32>() * window.width() - half_width, -half_height - 20.0)
+            };
+            
+            transform.translation.x = new_x;
+            transform.translation.y = new_y;
+            
+            // Randomize direction slightly
+            let mut new_dir = movement.direction;
+            new_dir.x += rand::random::<f32>() * 0.4 - 0.2;
+            new_dir.y += rand::random::<f32>() * 0.4 - 0.2;
+            movement.direction = new_dir.normalize();
+            
+            // Update rotation to match direction
+            transform.rotation = Quat::from_rotation_z(movement.direction.y.atan2(movement.direction.x));
+        }
+    }
+}
+
+// Cleanup background elements
+fn cleanup_menu_background(
+    mut commands: Commands,
+    query: Query<Entity, With<MenuBackground>>,
+) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn_recursive();
     }
 } 
