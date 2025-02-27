@@ -237,6 +237,7 @@ pub fn handle_projectile_enemy_collision(
                 // If enemy health <= 0, despawn enemy and all its children
                 if enemy.health <= 0.0 {
                     info!("Enemy defeated!");
+                    // Despawn the enemy after we've processed everything for this frame
                     commands.entity(enemy_entity).despawn_recursive();
                 }
                 
@@ -278,7 +279,7 @@ pub fn handle_projectile_obstacle_damage(
                 if obstacle.is_destructible {
                     let is_destroyed = obstacle.take_damage(projectile.damage);
                     
-                    // Add debug component to obstacle for visual feedback
+                    // Add debug component to obstacle for visual feedback - only if it still exists
                     commands.entity(obstacle_entity).insert(CollisionDebug::default());
                     
                     // Print debug info

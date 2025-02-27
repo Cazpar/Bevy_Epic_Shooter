@@ -32,8 +32,6 @@ impl Plugin for GamePlugins {
             .add_plugins(PickupPlugin)
             .add_plugins(UiPlugin)
             .add_plugins(CameraPlugin)
-            .add_plugins(CollisionPlugin)
-            .add_plugins(PickupPlugin);
-
+            .add_plugins(CollisionPlugin);
     }
 }

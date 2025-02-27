@@ -35,14 +35,14 @@ pub fn handle_player_obstacle_collision(
                 player_transform.translation.x += direction.x * push_strength;
                 player_transform.translation.y += direction.y * push_strength;
                 
-                // Add debug component to player for visual feedback
+                // Add debug component to player for visual feedback - only if it still exists
                 commands.entity(player_entity).insert(CollisionDebug::default());
                 
-                // Add debug component to obstacle for visual feedback
+                // Add debug component to obstacle for visual feedback - only if it still exists
                 commands.entity(obstacle_entity).insert(CollisionDebug::default());
                 
                 // Print debug info
-                info!("Player collision with obstacle: distance={}, min_distance={}", distance, min_distance);
+                // info!("Player collision with obstacle: distance={}, min_distance={}", distance, min_distance);
             }
         }
     }
@@ -76,14 +76,14 @@ pub fn handle_enemy_obstacle_collision(
                 enemy_transform.translation.x += direction.x * push_strength;
                 enemy_transform.translation.y += direction.y * push_strength;
                 
-                // Add debug component to enemy for visual feedback
+                // Add debug component to enemy for visual feedback - only if it still exists
                 commands.entity(enemy_entity).insert(CollisionDebug::default());
                 
-                // Add debug component to obstacle for visual feedback
+                // Add debug component to obstacle for visual feedback - only if it still exists
                 commands.entity(obstacle_entity).insert(CollisionDebug::default());
                 
                 // Print debug info
-                info!("Enemy collision with obstacle: distance={}, min_distance={}", distance, min_distance);
+                // info!("Enemy collision with obstacle: distance={}, min_distance={}", distance, min_distance);
             }
         }
     }
@@ -114,7 +114,7 @@ pub fn handle_projectile_obstacle_collision(
                     continue;
                 }
                 
-                // Add debug component to obstacle for visual feedback
+                // Add debug component to obstacle for visual feedback - only if it still exists
                 commands.entity(obstacle_entity).insert(CollisionDebug::default());
                 
                 // Print debug info
@@ -152,14 +152,17 @@ pub fn update_collision_debug(
         
         // If the timer is finished, remove the debug component
         if debug.timer.finished() {
-            commands.entity(entity).remove::<CollisionDebug>();
-            sprite.color = Color::WHITE; // Reset color
-            
-            // Also reset any child sprites
-            if let Some(children) = children {
-                for child in children.iter() {
-                    if let Ok(mut child_sprite) = child_sprites.get_mut(*child) {
-                        child_sprite.color = Color::WHITE;
+            // Use a safe approach to remove the component
+            if let Some(mut entity_commands) = commands.get_entity(entity) {
+                entity_commands.remove::<CollisionDebug>();
+                sprite.color = Color::WHITE; // Reset color
+                
+                // Also reset any child sprites
+                if let Some(children) = children {
+                    for child in children.iter() {
+                        if let Ok(mut child_sprite) = child_sprites.get_mut(*child) {
+                            child_sprite.color = Color::WHITE;
+                        }
                     }
                 }
             }

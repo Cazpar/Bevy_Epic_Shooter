@@ -28,24 +28,22 @@ pub fn spawn_enemy_drops(
         let mut rng = rand::thread_rng();
         
         // Only spawn a pickup with a certain chance
-        if rng.gen::<f32>() > DROP_CHANCE {
-            continue;
+        if rng.gen::<f32>() <= DROP_CHANCE {
+            // Determine what type of pickup to spawn
+            let pickup_type = match rng.gen_range(0..=100) {
+                0..=20 => PickupType::Weapon(WeaponType::Pistol),
+                21..=35 => PickupType::Weapon(WeaponType::Shotgun),
+                36..=50 => PickupType::Weapon(WeaponType::MachineGun),
+                51..=60 => PickupType::Weapon(WeaponType::RocketLauncher),
+                61..=70 => PickupType::DoubleShot,
+                71..=80 => PickupType::TripleShot,
+                81..=90 => PickupType::RapidFire,
+                91..=95 => PickupType::IncreasedDamage,
+                _ => PickupType::HealthPack,
+            };
+            
+            spawn_pickup(&mut commands, position, pickup_type);
         }
-        
-        // Determine what type of pickup to spawn
-        let pickup_type = match rng.gen_range(0..=100) {
-            0..=20 => PickupType::Weapon(WeaponType::Pistol),
-            21..=35 => PickupType::Weapon(WeaponType::Shotgun),
-            36..=50 => PickupType::Weapon(WeaponType::MachineGun),
-            51..=60 => PickupType::Weapon(WeaponType::RocketLauncher),
-            61..=70 => PickupType::DoubleShot,
-            71..=80 => PickupType::TripleShot,
-            81..=90 => PickupType::RapidFire,
-            91..=95 => PickupType::IncreasedDamage,
-            _ => PickupType::HealthPack,
-        };
-        
-        spawn_pickup(&mut commands, position, pickup_type);
     }
 }
 
