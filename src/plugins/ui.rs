@@ -112,7 +112,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     justify_content: JustifyContent::Center,
                     ..default()
                 },
-                background_color: Color::rgba(0.0, 0.0, 0.0, 0.5).into(), // Semi-transparent background
+                background_color: Color::rgba(0.0, 0.0, 0.0, 0.2).into(), // More transparent background (0.5 -> 0.2)
                 ..default()
             },
             MainMenuUI,
@@ -125,7 +125,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     TextStyle {
                         font: font.clone(),
                         font_size: 80.0,
-                        color: Color::rgb(0.9, 0.9, 1.0),
+                        color: Color::rgb(0.95, 0.95, 1.0), // Slightly brighter
                     },
                 )
                 .with_style(Style {
@@ -142,7 +142,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     TextStyle {
                         font: font.clone(),
                         font_size: 24.0,
-                        color: Color::rgb(0.7, 0.7, 0.8),
+                        color: Color::rgb(0.8, 0.8, 0.9), // Slightly brighter
                     },
                 )
                 .with_style(Style {
@@ -158,7 +158,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     TextStyle {
                         font: font.clone(),
                         font_size: 32.0,
-                        color: Color::rgb(0.8, 0.8, 0.8),
+                        color: Color::rgb(0.9, 0.9, 0.9), // Brighter for better visibility
                     },
                 )
                 .with_style(Style {
@@ -176,7 +176,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         TextStyle {
                             font: font.clone(),
                             font_size: 24.0,
-                            color: Color::rgb(0.9, 0.9, 0.9),
+                            color: Color::rgb(1.0, 1.0, 1.0), // Pure white for better visibility
                         },
                     ),
                     TextSection::new(
@@ -184,7 +184,7 @@ fn setup_main_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         TextStyle {
                             font: font.clone(),
                             font_size: 20.0,
-                            color: Color::rgb(0.7, 0.7, 0.7),
+                            color: Color::rgb(0.85, 0.85, 0.85), // Brighter for better visibility
                         },
                     ),
                 ])
@@ -676,14 +676,35 @@ fn spawn_menu_background_elements(
     let mut rng = rand::thread_rng();
     
     // Calculate window dimensions with extra padding to ensure elements spawn beyond visible area
-    let width_range = window.width() * 1.5;
-    let height_range = window.height() * 1.5;
+    let width_range = window.width() * 2.0; // Increased from 1.5 to 2.0 for wider coverage
+    let height_range = window.height() * 2.0; // Increased from 1.5 to 2.0 for taller coverage
     let center_x_offset = 100.0; // Offset to match the camera's initial position
     let center_y_offset = 50.0;
     
+    // Add a full-screen background to ensure no black bars are visible
+    commands.spawn((
+        SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgba(0.2, 0.3, 0.1, 1.0), // Dark olive green background
+                custom_size: Some(Vec2::new(width_range * 1.5, height_range * 1.5)), // Extra large to ensure coverage
+                ..default()
+            },
+            transform: Transform::from_translation(Vec3::new(center_x_offset, center_y_offset, -0.1)), // Slightly behind other elements
+            ..default()
+        },
+        MenuBackground {
+            speed: 0.0, // Static background
+            rotation_speed: 0.0,
+        },
+        MenuBackgroundMovement {
+            direction: Vec2::new(0.0, 0.0),
+        },
+    ));
+    
     // Spawn more decorative elements for a richer background
-    for i in 0..50 {
+    for i in 0..80 { // Increased from 50 to 80 for more elements
         // Distribute elements across a wider area, centered around the camera's initial position
+        // Use a more uniform distribution to ensure coverage of the sides
         let x = rand::random::<f32>() * width_range - width_range / 2.0 + center_x_offset;
         let y = rand::random::<f32>() * height_range - height_range / 2.0 + center_y_offset;
         
@@ -765,6 +786,50 @@ fn spawn_menu_background_elements(
             },
         ));
     }
+    
+    // Add some decorative elements specifically on the sides to ensure coverage
+    for i in 0..20 {
+        // Alternate between left and right sides
+        let side_factor = if i % 2 == 0 { -1.0 } else { 1.0 };
+        let x = side_factor * (half_width(window) * 0.8 + rand::random::<f32>() * 100.0) + center_x_offset;
+        let y = rand::random::<f32>() * height_range - height_range / 2.0 + center_y_offset;
+        
+        let size = rand::random::<f32>() * 20.0 + 15.0;
+        let color = match i % 3 {
+            0 => Color::rgba(0.8, 0.2, 0.2, 0.5), // Red
+            1 => Color::rgba(0.2, 0.8, 0.2, 0.5), // Green
+            _ => Color::rgba(0.2, 0.2, 0.9, 0.5), // Blue
+        };
+        
+        commands.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    color,
+                    custom_size: Some(Vec2::new(size, size)),
+                    ..default()
+                },
+                transform: Transform::from_translation(Vec3::new(x, y, 0.0)),
+                ..default()
+            },
+            MenuBackground {
+                speed: rand::random::<f32>() * 15.0 + 5.0,
+                rotation_speed: rand::random::<f32>() * 1.0 - 0.5,
+            },
+            MenuBackgroundMovement {
+                direction: Vec2::new(-side_factor, rand::random::<f32>() * 0.4 - 0.2).normalize(),
+            },
+        ));
+    }
+}
+
+// Helper function to get half width
+fn half_width(window: &Window) -> f32 {
+    window.width() / 2.0
+}
+
+// Helper function to get half height
+fn half_height(window: &Window) -> f32 {
+    window.height() / 2.0
 }
 
 // Component to track movement direction

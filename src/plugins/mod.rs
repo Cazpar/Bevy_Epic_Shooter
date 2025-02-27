@@ -7,6 +7,7 @@ pub mod ui;
 pub mod collision;
 pub mod camera;
 pub mod game_state;
+pub mod animation;
 
 
 use bevy::prelude::*;
@@ -19,6 +20,7 @@ use ui::UiPlugin;
 use collision::CollisionPlugin;
 use camera::CameraPlugin;
 use game_state::GameStatePlugin;
+use animation::AnimationPlugin;
 
 
 /// Collection of all game plugins
@@ -35,6 +37,7 @@ impl Plugin for GamePlugins {
             .add_plugins(PickupPlugin)
             .add_plugins(UiPlugin)
             .add_plugins(CameraPlugin)
-            .add_plugins(CollisionPlugin);
+            .add_plugins(CollisionPlugin)
+            .add_plugins(AnimationPlugin);
     }
 }

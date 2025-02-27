@@ -4,3 +4,4 @@ pub mod weapon;
 pub mod camera; 
 pub mod collision; 
 pub mod pickup; 
+pub mod animation; 
